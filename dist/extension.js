@@ -1,1 +1,228 @@
-(()=>{"use strict";var t={265:function(t,e,n){var o,i=this&&this.__createBinding||(Object.create?function(t,e,n,o){void 0===o&&(o=n);var i=Object.getOwnPropertyDescriptor(e,n);i&&!("get"in i?!e.__esModule:i.writable||i.configurable)||(i={enumerable:!0,get:function(){return e[n]}}),Object.defineProperty(t,o,i)}:function(t,e,n,o){void 0===o&&(o=n),t[o]=e[n]}),r=this&&this.__setModuleDefault||(Object.create?function(t,e){Object.defineProperty(t,"default",{enumerable:!0,value:e})}:function(t,e){t.default=e}),d=this&&this.__importStar||(o=function(t){return o=Object.getOwnPropertyNames||function(t){var e=[];for(var n in t)Object.prototype.hasOwnProperty.call(t,n)&&(e[e.length]=n);return e},o(t)},function(t){if(t&&t.__esModule)return t;var e={};if(null!=t)for(var n=o(t),d=0;d<n.length;d++)"default"!==n[d]&&i(e,t,n[d]);return r(e,t),e});Object.defineProperty(e,"__esModule",{value:!0}),e.activate=function(t){console.log("YouTube Player extension is now active!");const e=new s(t.extensionUri);t.subscriptions.push(a.window.registerWebviewViewProvider("youtube-player.view",e))},e.deactivate=function(){};const a=d(n(398));class s{_extensionUri;_view;constructor(t){this._extensionUri=t}resolveWebviewView(t,e,n){this._view=t,t.webview.options={enableScripts:!0,localResourceRoots:[this._extensionUri]},t.webview.html=this._getHtmlForWebview(),t.webview.onDidReceiveMessage((async t=>{if("addVideo"===t.type){const t=await a.window.showInputBox({prompt:"Enter YouTube URL",placeHolder:"https://www.youtube.com/watch?v=..."});if(t){const e=function(t){const e=t.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);return e&&11===e[2].length?e[2]:null}(t);e?this._view&&this._view.webview.postMessage({type:"playVideo",videoId:e}):a.window.showErrorMessage("Invalid YouTube URL")}}}))}_getHtmlForWebview(){return'\n\t\t\t<!DOCTYPE html>\n\t\t\t<html lang="en">\n\t\t\t<head>\n\t\t\t\t<meta charset="UTF-8">\n\t\t\t\t<meta name="viewport" content="width=device-width, initial-scale=1.0">\n\t\t\t\t<style>\n\t\t\t\t\tbody {\n\t\t\t\t\t\tmargin: 0;\n\t\t\t\t\t\tpadding: 10px;\n\t\t\t\t\t\tcolor: var(--vscode-foreground);\n\t\t\t\t\t\tbackground-color: var(--vscode-editor-background);\n\t\t\t\t\t}\n\t\t\t\t\t.video-container {\n\t\t\t\t\t\tposition: relative;\n\t\t\t\t\t\tpadding-bottom: 56.25%;\n\t\t\t\t\t\theight: 0;\n\t\t\t\t\t\toverflow: hidden;\n\t\t\t\t\t\tmargin-top: 10px;\n\t\t\t\t\t}\n\t\t\t\t\t.video-container iframe {\n\t\t\t\t\t\tposition: absolute;\n\t\t\t\t\t\ttop: 0;\n\t\t\t\t\t\tleft: 0;\n\t\t\t\t\t\twidth: 100%;\n\t\t\t\t\t\theight: 100%;\n\t\t\t\t\t\tborder: none;\n\t\t\t\t\t}\n\t\t\t\t\tbutton {\n\t\t\t\t\t\tbackground-color: var(--vscode-button-background);\n\t\t\t\t\t\tcolor: var(--vscode-button-foreground);\n\t\t\t\t\t\tborder: none;\n\t\t\t\t\t\tpadding: 4px 8px;\n\t\t\t\t\t\tcursor: pointer;\n\t\t\t\t\t\tborder-radius: 2px;\n\t\t\t\t\t\tmargin: 5px 0;\n\t\t\t\t\t}\n\t\t\t\t\tbutton:hover {\n\t\t\t\t\t\tbackground-color: var(--vscode-button-hoverBackground);\n\t\t\t\t\t}\n\t\t\t\t</style>\n\t\t\t</head>\n\t\t\t<body>\n\t\t\t\t<button id="addVideoButton">Add Video</button>\n\t\t\t\t<div id="player"></div>\n\t\t\t\t<script>\n\t\t\t\t\t(function() {\n\t\t\t\t\t\tconst vscode = acquireVsCodeApi();\n\t\t\t\t\t\tlet currentVideoId = null;\n\n\t\t\t\t\t\t// DOM 요소들을 캐시\n\t\t\t\t\t\tconst player = document.getElementById(\'player\');\n\t\t\t\t\t\tconst addVideoButton = document.getElementById(\'addVideoButton\');\n\n\t\t\t\t\t\t// Add Video 버튼에 이벤트 리스너 등록\n\t\t\t\t\t\taddVideoButton.addEventListener(\'click\', () => {\n\t\t\t\t\t\t\tvscode.postMessage({ type: \'addVideo\' });\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// 메시지 이벤트 리스너\n\t\t\t\t\t\twindow.addEventListener(\'message\', event => {\n\t\t\t\t\t\t\tconst message = event.data;\n\t\t\t\t\t\t\tif (message.type === \'playVideo\') {\n\t\t\t\t\t\t\t\tplayVideo(message.videoId);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// 비디오 재생 함수\n\t\t\t\t\t\tfunction playVideo(videoId) {\n\t\t\t\t\t\t\tif (currentVideoId === videoId) return;\n\t\t\t\t\t\t\tcurrentVideoId = videoId;\n\t\t\t\t\t\t\tplayer.innerHTML = `\n\t\t\t\t\t\t\t\t<div class="video-container">\n\t\t\t\t\t\t\t\t\t<iframe\n\t\t\t\t\t\t\t\t\t\tsrc="https://www.youtube.com/embed/${videoId}?autoplay=1"\n\t\t\t\t\t\t\t\t\t\tallow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"\n\t\t\t\t\t\t\t\t\t\tallowfullscreen>\n\t\t\t\t\t\t\t\t\t</iframe>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t`;\n\t\t\t\t\t\t}\n\t\t\t\t\t})();\n\t\t\t\t<\/script>\n\t\t\t</body>\n\t\t\t</html>\n\t\t'}}},398:t=>{t.exports=require("vscode")}},e={},n=function n(o){var i=e[o];if(void 0!==i)return i.exports;var r=e[o]={exports:{}};return t[o].call(r.exports,r,r.exports,n),r.exports}(265);module.exports=n})();
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ([
+/* 0 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.activate = activate;
+exports.deactivate = deactivate;
+// The module 'vscode' contains the VS Code extensibility API
+// Import the module and reference it with the alias vscode in your code below
+const vscode = __importStar(__webpack_require__(1));
+class YouTubeViewProvider {
+    _extensionUri;
+    _view;
+    constructor(_extensionUri) {
+        this._extensionUri = _extensionUri;
+    }
+    resolveWebviewView(webviewView, context, _token) {
+        this._view = webviewView;
+        webviewView.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [this._extensionUri]
+        };
+        webviewView.webview.html = this._getHtmlForWebview();
+        webviewView.webview.onDidReceiveMessage(async (data) => {
+            if (data.type === 'addVideo') {
+                const url = await vscode.window.showInputBox({
+                    prompt: 'Enter YouTube URL',
+                    placeHolder: 'https://www.youtube.com/watch?v=...'
+                });
+                if (url) {
+                    const videoId = extractVideoId(url);
+                    if (videoId) {
+                        if (this._view) {
+                            this._view.webview.postMessage({ type: 'playVideo', videoId });
+                        }
+                    }
+                    else {
+                        vscode.window.showErrorMessage('Invalid YouTube URL');
+                    }
+                }
+            }
+        });
+    }
+    _getHtmlForWebview() {
+        return `
+			<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<style>
+					body {
+						margin: 0;
+						padding: 10px;
+						color: var(--vscode-foreground);
+						background-color: var(--vscode-editor-background);
+					}
+					.video-container {
+						position: relative;
+						padding-bottom: 56.25%;
+						height: 0;
+						overflow: hidden;
+						margin-top: 10px;
+					}
+					.video-container iframe {
+						position: absolute;
+						top: 0;
+						left: 0;
+						width: 100%;
+						height: 100%;
+						border: none;
+					}
+					button {
+						background-color: var(--vscode-button-background);
+						color: var(--vscode-button-foreground);
+						border: none;
+						padding: 4px 8px;
+						cursor: pointer;
+						border-radius: 2px;
+						margin: 5px 0;
+					}
+					button:hover {
+						background-color: var(--vscode-button-hoverBackground);
+					}
+				</style>
+			</head>
+			<body>
+				<button id="addVideoButton">Add Video</button>
+				<div id="player"></div>
+				<script>
+					(function() {
+						const vscode = acquireVsCodeApi();
+						let currentVideoId = null;
+
+						// DOM 요소들을 캐시
+						const player = document.getElementById('player');
+						const addVideoButton = document.getElementById('addVideoButton');
+
+						// Add Video 버튼에 이벤트 리스너 등록
+						addVideoButton.addEventListener('click', () => {
+							vscode.postMessage({ type: 'addVideo' });
+						});
+
+						// 메시지 이벤트 리스너
+						window.addEventListener('message', event => {
+							const message = event.data;
+							if (message.type === 'playVideo') {
+								playVideo(message.videoId);
+							}
+						});
+
+						// 비디오 재생 함수
+						function playVideo(videoId) {
+							if (currentVideoId === videoId) return;
+							currentVideoId = videoId;
+							player.innerHTML = \`
+								<div class="video-container">
+									<iframe
+										src="https://www.youtube.com/embed/\${videoId}?autoplay=1"
+										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+										allowfullscreen>
+									</iframe>
+								</div>
+							\`;
+						}
+					})();
+				</script>
+			</body>
+			</html>
+		`;
+    }
+}
+// This method is called when your extension is activated
+// Your extension is activated the very first time the command is executed
+function activate(context) {
+    console.log('YouTube Player extension is now active!');
+    const provider = new YouTubeViewProvider(context.extensionUri);
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider('youtube-player.view', provider));
+}
+function extractVideoId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+// This method is called when your extension is deactivated
+function deactivate() { }
+
+
+/***/ }),
+/* 1 */
+/***/ ((module) => {
+
+module.exports = require("vscode");
+
+/***/ })
+/******/ 	]);
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __webpack_require__(0);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
+/******/ })()
+;
+//# sourceMappingURL=extension.js.map
