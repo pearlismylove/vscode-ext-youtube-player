@@ -55,7 +55,7 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 				<style>
 					body {
 						margin: 0;
-						padding: 10px;
+						padding: 0px;
 						color: var(--vscode-foreground);
 						background-color: var(--vscode-editor-background);
 					}
