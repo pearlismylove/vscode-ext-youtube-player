@@ -10,6 +10,12 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 		private readonly _extensionUri: vscode.Uri,
 	) { }
 
+	public playVideo(videoId: string) {
+		if (this._view) {
+			this._view.webview.postMessage({ type: 'playVideo', videoId });
+		}
+	}
+
 	public resolveWebviewView(
 		webviewView: vscode.WebviewView,
 		context: vscode.WebviewViewResolveContext,
@@ -58,13 +64,25 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 						padding: 0px;
 						color: var(--vscode-foreground);
 						background-color: var(--vscode-editor-background);
+						height: 100vh;
+						display: flex;
+						flex-direction: column;
+						align-items: center;
+						justify-content: center;
+					}
+					#player {
+						position: absolute;
+						width: 100%;
+						height: 100%;
+						display: flex;
+						align-items: center;
+						justify-content: center;
 					}
 					.video-container {
 						position: relative;
-						padding-bottom: 56.25%;
-						height: 0;
+						width: 100%;
+						height: 100%;
 						overflow: hidden;
-						margin-top: 10px;
 					}
 					.video-container iframe {
 						position: absolute;
@@ -75,22 +93,38 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 						border: none;
 					}
 					button {
-						background-color: var(--vscode-button-background);
-						color: var(--vscode-button-foreground);
+						background-color: #FF0000;
+						color: white;
 						border: none;
-						padding: 4px 8px;
+						width: 60px;
+						height: 60px;
+						border-radius: 50%;
 						cursor: pointer;
-						border-radius: 2px;
-						margin: 5px 0;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						position: relative;
+						transition: transform 0.2s;
 					}
 					button:hover {
-						background-color: var(--vscode-button-hoverBackground);
+						background-color: #CC0000;
+						transform: scale(1.1);
+					}
+					button::before {
+						content: '';
+						width: 0;
+						height: 0;
+						border-style: solid;
+						border-width: 12px 0 12px 20px;
+						border-color: transparent transparent transparent white;
+						margin-left: 4px;
+						border-radius: 2px;
 					}
 				</style>
 			</head>
 			<body>
-				<button id="addVideoButton">Add Video</button>
 				<div id="player"></div>
+				<button id="addVideoButton"></button>
 				<script>
 					(function() {
 						const vscode = acquireVsCodeApi();
@@ -126,6 +160,8 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 									</iframe>
 								</div>
 							\`;
+							// Hide the button after video is loaded
+							addVideoButton.style.display = 'none';
 						}
 					})();
 				</script>
@@ -144,6 +180,25 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider('youtube-player.view', provider)
 	);
+
+	// Register command for adding video via command palette
+	let addVideoCommand = vscode.commands.registerCommand('youtube-player.addVideo', async () => {
+		const url = await vscode.window.showInputBox({
+			prompt: 'Enter YouTube URL',
+			placeHolder: 'https://www.youtube.com/watch?v=...'
+		});
+
+		if (url) {
+			const videoId = extractVideoId(url);
+			if (videoId) {
+				provider.playVideo(videoId);
+			} else {
+				vscode.window.showErrorMessage('Invalid YouTube URL');
+			}
+		}
+	});
+
+	context.subscriptions.push(addVideoCommand);
 }
 
 function extractVideoId(url: string): string | null {

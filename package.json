@@ -29,7 +29,13 @@
           "name": "YouTube Player"
         }
       ]
-    }
+    },
+    "commands": [
+      {
+        "command": "youtube-player.addVideo",
+        "title": "YouTube Player: Add Video"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
