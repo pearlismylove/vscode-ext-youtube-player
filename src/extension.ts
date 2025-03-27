@@ -5,6 +5,9 @@ import * as path from 'path';
 
 class YouTubeViewProvider implements vscode.WebviewViewProvider {
 	private _view?: vscode.WebviewView;
+	private _currentVideoId: string | null = null;
+	private _isPaused: boolean = false;
+	private _currentTime: number = 0;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
@@ -12,6 +15,9 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 
 	public playVideo(videoId: string) {
 		if (this._view) {
+			this._currentVideoId = videoId;
+			this._isPaused = false;
+			this._currentTime = 0;
 			this._view.webview.postMessage({ type: 'playVideo', videoId });
 		}
 	}
@@ -30,6 +36,18 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 
 		webviewView.webview.html = this._getHtmlForWebview();
 
+		// Restore video state when webview becomes visible
+		webviewView.onDidChangeVisibility(() => {
+			if (webviewView.visible && this._currentVideoId) {
+				webviewView.webview.postMessage({ 
+					type: 'playVideo', 
+					videoId: this._currentVideoId,
+					isPaused: this._isPaused,
+					currentTime: this._currentTime
+				});
+			}
+		});
+
 		webviewView.webview.onDidReceiveMessage(async data => {
 			if (data.type === 'addVideo') {
 				const url = await vscode.window.showInputBox({
@@ -41,12 +59,18 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 					const videoId = extractVideoId(url);
 					if (videoId) {
 						if (this._view) {
+							this._currentVideoId = videoId;
+							this._isPaused = false;
+							this._currentTime = 0;
 							this._view.webview.postMessage({ type: 'playVideo', videoId });
 						}
 					} else {
 						vscode.window.showErrorMessage('Invalid YouTube URL');
 					}
 				}
+			} else if (data.type === 'playerStateChanged') {
+				this._isPaused = data.isPaused;
+				this._currentTime = data.currentTime;
 			}
 		});
 	}
@@ -129,9 +153,12 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 					(function() {
 						const vscode = acquireVsCodeApi();
 						let currentVideoId = null;
+						let player = null;
+						let pendingTime = 0;
+						let pendingPaused = false;
 
 						// DOM 요소들을 캐시
-						const player = document.getElementById('player');
+						const playerContainer = document.getElementById('player');
 						const addVideoButton = document.getElementById('addVideoButton');
 
 						// Add Video 버튼에 이벤트 리스너 등록
@@ -143,18 +170,22 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 						window.addEventListener('message', event => {
 							const message = event.data;
 							if (message.type === 'playVideo') {
-								playVideo(message.videoId);
+								playVideo(message.videoId, message.isPaused, message.currentTime);
 							}
 						});
 
 						// 비디오 재생 함수
-						function playVideo(videoId) {
+						function playVideo(videoId, isPaused = false, currentTime = 0) {
 							if (currentVideoId === videoId) return;
 							currentVideoId = videoId;
-							player.innerHTML = \`
+							pendingTime = currentTime;
+							pendingPaused = isPaused;
+
+							playerContainer.innerHTML = \`
 								<div class="video-container">
 									<iframe
-										src="https://www.youtube.com/embed/\${videoId}?autoplay=1"
+										id="youtube-player"
+										src="https://www.youtube.com/embed/\${videoId}?autoplay=1&enablejsapi=1"
 										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
 										allowfullscreen>
 									</iframe>
@@ -162,6 +193,44 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 							\`;
 							// Hide the button after video is loaded
 							addVideoButton.style.display = 'none';
+
+							// YouTube IFrame API 로드
+							if (typeof YT === 'undefined') {
+								const tag = document.createElement('script');
+								tag.src = "https://www.youtube.com/iframe_api";
+								const firstScriptTag = document.getElementsByTagName('script')[0];
+								firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+							}
+
+							window.onYouTubeIframeAPIReady = function() {
+								player = new YT.Player('youtube-player', {
+									events: {
+										'onStateChange': onPlayerStateChange,
+										'onReady': onPlayerReady
+									}
+								});
+							};
+						}
+
+						function onPlayerReady(event) {
+							if (player) {
+								player.seekTo(pendingTime);
+								if (pendingPaused) {
+									player.pauseVideo();
+								}
+							}
+						}
+
+						function onPlayerStateChange(event) {
+							// YT.PlayerState.PAUSED = 2
+							const isPaused = event.data === 2;
+							const currentTime = player ? player.getCurrentTime() : 0;
+							
+							vscode.postMessage({ 
+								type: 'playerStateChanged', 
+								isPaused,
+								currentTime
+							});
 						}
 					})();
 				</script>
