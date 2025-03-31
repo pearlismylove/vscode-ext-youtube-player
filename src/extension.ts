@@ -3,23 +3,62 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
+interface VideoHistory {
+	id: string;
+	title: string;
+	url: string;
+	timestamp: number;
+}
+
 class YouTubeViewProvider implements vscode.WebviewViewProvider {
 	private _view?: vscode.WebviewView;
 	private _currentVideoId: string | null = null;
 	private _isPaused: boolean = false;
 	private _currentTime: number = 0;
+	private readonly _maxHistoryItems = 30;
 
 	constructor(
 		private readonly _extensionUri: vscode.Uri,
+		private readonly _context: vscode.ExtensionContext,
 	) { }
 
-	public playVideo(videoId: string) {
+	public playVideo(videoId: string, title?: string, url?: string) {
 		if (this._view) {
 			this._currentVideoId = videoId;
 			this._isPaused = false;
 			this._currentTime = 0;
 			this._view.webview.postMessage({ type: 'playVideo', videoId });
+
+			// Save to history if title and url are provided
+			if (url) {
+				this._addToHistory(videoId, title || `Video ${videoId}`, url);
+			}
 		}
+	}
+
+	private async _addToHistory(videoId: string, title: string, url: string) {
+		const history = this._context.globalState.get<VideoHistory[]>('youtubePlayer.history', []);
+		
+		// Remove if already exists
+		const filteredHistory = history.filter(item => item.id !== videoId);
+		
+		// Add new item at the beginning
+		const newHistory = [
+			{ id: videoId, title, url, timestamp: Date.now() },
+			...filteredHistory
+		].slice(0, this._maxHistoryItems);
+
+		await this._context.globalState.update('youtubePlayer.history', newHistory);
+	}
+
+	public async getHistory(): Promise<VideoHistory[]> {
+		return this._context.globalState.get<VideoHistory[]>('youtubePlayer.history', []);
+	}
+
+	public async removeFromHistory(videoId: string) {
+		const history = await this.getHistory();
+		const newHistory = history.filter(item => item.id !== videoId);
+		await this._context.globalState.update('youtubePlayer.history', newHistory);
 	}
 
 	public resolveWebviewView(
@@ -63,6 +102,8 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 							this._isPaused = false;
 							this._currentTime = 0;
 							this._view.webview.postMessage({ type: 'playVideo', videoId });
+							// Save to history with temporary title
+							this._addToHistory(videoId, `Video ${videoId}`, url);
 						}
 					} else {
 						vscode.window.showErrorMessage('Invalid YouTube URL');
@@ -71,6 +112,13 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 			} else if (data.type === 'playerStateChanged') {
 				this._isPaused = data.isPaused;
 				this._currentTime = data.currentTime;
+			} else if (data.type === 'videoLoaded') {
+				// Update video title in history
+				const history = await this.getHistory();
+				const video = history.find(item => item.id === data.videoId);
+				if (video && video.title !== data.title) {
+					await this._addToHistory(data.videoId, data.title, video.url);
+				}
 			}
 		});
 	}
@@ -82,6 +130,7 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<script src="https://www.youtube.com/iframe_api"></script>
 				<style>
 					body {
 						margin: 0;
@@ -156,6 +205,7 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 						let player = null;
 						let pendingTime = 0;
 						let pendingPaused = false;
+						let isAPIReady = false;
 
 						// DOM 요소들을 캐시
 						const playerContainer = document.getElementById('player');
@@ -174,42 +224,49 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 							}
 						});
 
+						// YouTube API Ready 핸들러
+						window.onYouTubeIframeAPIReady = function() {
+							isAPIReady = true;
+							if (currentVideoId) {
+								createPlayer(currentVideoId);
+							}
+						};
+
 						// 비디오 재생 함수
 						function playVideo(videoId, isPaused = false, currentTime = 0) {
-							if (currentVideoId === videoId) return;
+							if (currentVideoId === videoId && player) return;
+							
 							currentVideoId = videoId;
 							pendingTime = currentTime;
 							pendingPaused = isPaused;
 
-							playerContainer.innerHTML = \`
-								<div class="video-container">
-									<iframe
-										id="youtube-player"
-										src="https://www.youtube.com/embed/\${videoId}?autoplay=1&enablejsapi=1"
-										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-										allowfullscreen>
-									</iframe>
-								</div>
-							\`;
-							// Hide the button after video is loaded
-							addVideoButton.style.display = 'none';
-
-							// YouTube IFrame API 로드
-							if (typeof YT === 'undefined') {
-								const tag = document.createElement('script');
-								tag.src = "https://www.youtube.com/iframe_api";
-								const firstScriptTag = document.getElementsByTagName('script')[0];
-								firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+							if (player) {
+								player.destroy();
+								player = null;
 							}
 
-							window.onYouTubeIframeAPIReady = function() {
-								player = new YT.Player('youtube-player', {
-									events: {
-										'onStateChange': onPlayerStateChange,
-										'onReady': onPlayerReady
-									}
-								});
-							};
+							// Hide the button
+							addVideoButton.style.display = 'none';
+
+							if (isAPIReady) {
+								createPlayer(videoId);
+							}
+						}
+
+						function createPlayer(videoId) {
+							player = new YT.Player('player', {
+								height: '100%',
+								width: '100%',
+								videoId: videoId,
+								playerVars: {
+									autoplay: 1,
+									enablejsapi: 1
+								},
+								events: {
+									'onReady': onPlayerReady,
+									'onStateChange': onPlayerStateChange
+								}
+							});
 						}
 
 						function onPlayerReady(event) {
@@ -217,6 +274,15 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 								player.seekTo(pendingTime);
 								if (pendingPaused) {
 									player.pauseVideo();
+								}
+								// Send video title to extension
+								const videoData = player.getVideoData();
+								if (videoData && videoData.title) {
+									vscode.postMessage({
+										type: 'videoLoaded',
+										videoId: currentVideoId,
+										title: videoData.title
+									});
 								}
 							}
 						}
@@ -231,6 +297,18 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 								isPaused,
 								currentTime
 							});
+
+							// 상태가 변경될 때마다 제목 확인 및 업데이트
+							if (player) {
+								const videoData = player.getVideoData();
+								if (videoData && videoData.title) {
+									vscode.postMessage({
+										type: 'videoLoaded',
+										videoId: currentVideoId,
+										title: videoData.title
+									});
+								}
+							}
 						}
 					})();
 				</script>
@@ -245,7 +323,7 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 export function activate(context: vscode.ExtensionContext) {
 	console.log('YouTube Player extension is now active!');
 
-	const provider = new YouTubeViewProvider(context.extensionUri);
+	const provider = new YouTubeViewProvider(context.extensionUri, context);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider('youtube-player.view', provider)
 	);
@@ -260,14 +338,45 @@ export function activate(context: vscode.ExtensionContext) {
 		if (url) {
 			const videoId = extractVideoId(url);
 			if (videoId) {
-				provider.playVideo(videoId);
+				provider.playVideo(videoId, `Video ${videoId}`, url);
 			} else {
 				vscode.window.showErrorMessage('Invalid YouTube URL');
 			}
 		}
 	});
 
-	context.subscriptions.push(addVideoCommand);
+	// Register command for showing video history
+	let showHistoryCommand = vscode.commands.registerCommand('youtube-player.showHistory', async () => {
+		while (true) {  // Loop to show history after deletion
+			const history = await provider.getHistory();
+			if (history.length === 0) {
+				vscode.window.showInformationMessage('No video history found.');
+				return;
+			}
+
+			const items = history.map(item => ({
+				label: item.title,
+				description: item.url,
+				detail: new Date(item.timestamp).toLocaleString(),
+				videoId: item.id,
+				url: item.url
+			}));
+
+			const selected = await vscode.window.showQuickPick(items, {
+				placeHolder: 'Select a video from history',
+				matchOnDescription: true,
+				matchOnDetail: true
+			});
+
+			if (!selected) {
+				return;  // User cancelled
+			}
+			provider.playVideo(selected.videoId, selected.label, selected.url);
+			return;
+		}
+	});
+
+	context.subscriptions.push(addVideoCommand, showHistoryCommand);
 }
 
 function extractVideoId(url: string): string | null {
