@@ -1,94 +1,63 @@
-# YouTube Player
+# YouTube Player for VS Code
 
-VS Code에서 YouTube 비디오를 직접 재생할 수 있는 확장 프로그램입니다.
-
-## 기능
-
-- YouTube URL을 입력하여 비디오를 바로 재생
-- VS Code 내에서 직접 YouTube 비디오 시청 가능
-
-## 사용 방법
-
-1. VS Code의 탐색기에서 "YouTube Player" 뷰를 엽니다.
-2. "Add Video" 버튼을 클릭합니다.
-3. YouTube URL을 입력합니다 (예: https://www.youtube.com/watch?v=...)
-4. 비디오가 자동으로 재생됩니다.
-
-## 요구사항
-
-- VS Code 1.74.0 이상
-
-## 설치 방법
-
-1. VS Code를 실행합니다.
-2. `Ctrl+Shift+P` (Windows/Linux) 또는 `Cmd+Shift+P` (Mac)를 눌러 명령 팔레트를 엽니다.
-3. "Install from VSIX..."를 입력하고 선택합니다.
-4. `.vsix` 파일을 선택합니다.
+Watch YouTube videos directly within Visual Studio Code! This extension allows you to play YouTube videos in a dedicated view, making it easy to follow tutorials or watch educational content while coding.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- 🎥 Play YouTube videos directly in VS Code
+- 📝 Add videos via URL or command palette
+- 📋 Maintain a history of recently watched videos (up to 30)
+- ⏯️ Preserve video playback state (pause position, etc.)
+- 🎯 Quick access through VS Code's sidebar
 
-For example if there is an image subfolder under your extension project workspace:
+## Installation
 
-\!\[feature X\]\(images/feature-x.png\)
+1. Open VS Code
+2. Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (Mac) to open the Extensions view
+3. Search for "YouTube Player"
+4. Click Install
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Usage
+
+### Playing a Video
+
+1. Open the YouTube Player view from the sidebar
+2. Click the "+" button or use the command palette and Type "YouTube Player: Play Video"
+3. Enter a YouTube URL (e.g., https://www.youtube.com/watch?v=...)
+4. The video will start playing automatically
+
+### Viewing History
+
+1. Open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
+2. Type "YouTube Player: Show History"
+3. Select a video from your history to play it
+
+## Screenshots
+
+![Adding a YouTube video](images/README1.png)
+
+![Viewing video history](images/README2.png)
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- VS Code version 1.74.0 or higher
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+* `youtubePlayer.maxHistoryItems`: Maximum number of videos to keep in history (default: 30)
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+Initial release of YouTube Player for VS Code:
+- Basic video playback functionality
+- Video history management
+- Playback state preservation
+- Command palette integration
 
 ---
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+**Enjoy coding with YouTube!** 🚀

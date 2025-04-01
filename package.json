@@ -1,21 +1,30 @@
 {
   "name": "youtube-player",
   "displayName": "YouTube Player",
-  "description": "Play YouTube videos directly in VS Code",
-  "version": "0.0.4",
-  "publisher": "your-publisher-name",
-  "private": true,
+  "description": "Play YouTube videos directly in VS Code - Watch tutorials and educational content while coding",
+  "version": "1.0.0",
+  "publisher": "Pearlismylove",
+  "private": false,
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-username/youtube-player"
-  },
   "engines": {
     "vscode": "^1.74.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Media"
   ],
+  "keywords": [
+    "youtube",
+    "video",
+    "player",
+    "tutorial",
+    "education"
+  ],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#FF0000",
+    "theme": "dark"
+  },
   "activationEvents": [
     "onView:youtube-player.view"
   ],
@@ -39,7 +48,17 @@
         "command": "youtube-player.showHistory",
         "title": "YouTube Player: Show History"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "YouTube Player",
+      "properties": {
+        "youtubePlayer.maxHistoryItems": {
+          "type": "number",
+          "default": 30,
+          "description": "Maximum number of videos to keep in history"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -51,7 +70,8 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "package-vsix": "vsce package"
+    "package-vsix": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/vscode": "^1.74.0",
