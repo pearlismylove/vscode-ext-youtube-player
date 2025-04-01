@@ -34,9 +34,9 @@ Watch YouTube videos directly within Visual Studio Code! This extension allows y
 
 ## Screenshots
 
-![Watching a YouTube video](images/README1.png)
+![Watching a YouTube video](https://pearlismylove-commons.s3.ap-northeast-2.amazonaws.com/images/readme/youtube-vscode-ext-readme1.png)
 
-![Watching a YouTube video](images/README2.png)
+![Watching a YouTube video](https://pearlismylove-commons.s3.ap-northeast-2.amazonaws.com/images/readme/youtube-vscode-ext-readme2.png)
 
 ## Requirements
 
@@ -49,6 +49,10 @@ This extension contributes the following settings:
 * `youtubeMediaPlayer.maxHistoryItems`: Maximum number of videos to keep in history (default: 30)
 
 ## Release Notes
+
+### 1.0.3
+
+- Update Screenshot URL
 
 ### 1.0.2
 
