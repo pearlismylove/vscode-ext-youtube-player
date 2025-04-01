@@ -1,6 +1,6 @@
 {
-  "name": "youtube-player",
-  "displayName": "YouTube Player",
+  "name": "youtube-media-player",
+  "displayName": "YouTube Media Player",
   "description": "Play YouTube videos directly in VS Code - Watch tutorials and educational content while coding",
   "version": "1.0.0",
   "publisher": "Pearlismylove",
@@ -14,8 +14,7 @@
     "vscode": "^1.74.0"
   },
   "categories": [
-    "Other",
-    "Media"
+    "Other"
   ],
   "keywords": [
     "youtube",
