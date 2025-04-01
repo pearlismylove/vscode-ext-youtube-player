@@ -6,6 +6,10 @@
   "publisher": "Pearlismylove",
   "private": false,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pearlismylove/vscode-ext-youtube-player"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },

@@ -34,9 +34,9 @@ Watch YouTube videos directly within Visual Studio Code! This extension allows y
 
 ## Screenshots
 
-![Adding a YouTube video](images/README1.png)
+![Watching a YouTube video](images/README1.png)
 
-![Viewing video history](images/README2.png)
+![Watching a YouTube video](images/README2.png)
 
 ## Requirements
 
