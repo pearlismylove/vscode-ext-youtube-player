@@ -22,14 +22,14 @@ Watch YouTube videos directly within Visual Studio Code! This extension allows y
 ### Playing a Video
 
 1. Open the YouTube Player view from the sidebar
-2. Click the "+" button or use the command palette and Type "YouTube Player: Play Video"
+2. Click the "+" button or use the command palette and type "YouTube Media Player: Play Video"
 3. Enter a YouTube URL (e.g., https://www.youtube.com/watch?v=...)
 4. The video will start playing automatically
 
 ### Viewing History
 
 1. Open the command palette (`Ctrl+Shift+P` or `Cmd+Shift+P`)
-2. Type "YouTube Player: Show History"
+2. Type "YouTube Media Player: Show History"
 3. Select a video from your history to play it
 
 ## Screenshots
@@ -46,9 +46,19 @@ Watch YouTube videos directly within Visual Studio Code! This extension allows y
 
 This extension contributes the following settings:
 
-* `youtubePlayer.maxHistoryItems`: Maximum number of videos to keep in history (default: 30)
+* `youtubeMediaPlayer.maxHistoryItems`: Maximum number of videos to keep in history (default: 30)
 
 ## Release Notes
+
+### 1.0.2
+
+- Bugfix
+
+### 1.0.1
+
+- Updated command names to be more descriptive:
+  - "YouTube Player: Play Video" → "YouTube Media Player: Play Video"
+  - "YouTube Player: Show History" → "YouTube Media Player: Show History"
 
 ### 1.0.0
 

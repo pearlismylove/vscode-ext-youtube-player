@@ -2,7 +2,7 @@
   "name": "youtube-media-player",
   "displayName": "YouTube Media Player",
   "description": "Play YouTube videos directly in VS Code - Watch tutorials and educational content while coding",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "publisher": "Pearlismylove",
   "private": false,
   "license": "MIT",
@@ -29,7 +29,7 @@
     "theme": "dark"
   },
   "activationEvents": [
-    "onView:youtube-player.view"
+    "onView:youtube-media-player.view"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -37,25 +37,25 @@
       "explorer": [
         {
           "type": "webview",
-          "id": "youtube-player.view",
-          "name": "YouTube Player"
+          "id": "youtube-media-player.view",
+          "name": "YouTube Media Player"
         }
       ]
     },
     "commands": [
       {
-        "command": "youtube-player.addVideo",
-        "title": "YouTube Player: Play Video"
+        "command": "youtube-media-player.addVideo",
+        "title": "YouTube Media Player: Play Video"
       },
       {
-        "command": "youtube-player.showHistory",
-        "title": "YouTube Player: Show History"
+        "command": "youtube-media-player.showHistory",
+        "title": "YouTube Media Player: Show History"
       }
     ],
     "configuration": {
-      "title": "YouTube Player",
+      "title": "YouTube Media Player",
       "properties": {
-        "youtubePlayer.maxHistoryItems": {
+        "youtubeMediaPlayer.maxHistoryItems": {
           "type": "number",
           "default": 30,
           "description": "Maximum number of videos to keep in history"

@@ -325,11 +325,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const provider = new YouTubeViewProvider(context.extensionUri, context);
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider('youtube-player.view', provider)
+		vscode.window.registerWebviewViewProvider('youtube-media-player.view', provider)
 	);
 
 	// Register command for adding video via command palette
-	let addVideoCommand = vscode.commands.registerCommand('youtube-player.addVideo', async () => {
+	let addVideoCommand = vscode.commands.registerCommand('youtube-media-player.addVideo', async () => {
 		const url = await vscode.window.showInputBox({
 			prompt: 'Enter YouTube URL',
 			placeHolder: 'https://www.youtube.com/watch?v=...'
@@ -346,7 +346,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	// Register command for showing video history
-	let showHistoryCommand = vscode.commands.registerCommand('youtube-player.showHistory', async () => {
+	let showHistoryCommand = vscode.commands.registerCommand('youtube-media-player.showHistory', async () => {
 		while (true) {  // Loop to show history after deletion
 			const history = await provider.getHistory();
 			if (history.length === 0) {
