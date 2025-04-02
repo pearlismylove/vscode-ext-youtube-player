@@ -50,6 +50,10 @@ This extension contributes the following settings:
 
 ## Release Notes
 
+### 1.0.4
+
+- Support Live URL
+
 ### 1.0.3
 
 - Update Screenshot URL

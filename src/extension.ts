@@ -380,7 +380,8 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function extractVideoId(url: string): string | null {
-	const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+	// Support for regular video URLs and live streaming URLs
+	const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|live\/)([^#&?]*).*/;
 	const match = url.match(regExp);
 	return (match && match[2].length === 11) ? match[2] : null;
 }
