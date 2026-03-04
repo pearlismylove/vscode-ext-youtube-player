@@ -13,8 +13,6 @@ interface VideoHistory {
 class YouTubeViewProvider implements vscode.WebviewViewProvider {
 	private _view?: vscode.WebviewView;
 	private _currentVideoId: string | null = null;
-	private _isPaused: boolean = false;
-	private _currentTime: number = 0;
 	private readonly _maxHistoryItems = 30;
 
 	constructor(
@@ -25,8 +23,6 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 	public playVideo(videoId: string, title?: string, url?: string) {
 		if (this._view) {
 			this._currentVideoId = videoId;
-			this._isPaused = false;
-			this._currentTime = 0;
 			this._view.webview.postMessage({ type: 'playVideo', videoId });
 
 			// Save to history if title and url are provided
@@ -80,9 +76,7 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 			if (webviewView.visible && this._currentVideoId) {
 				webviewView.webview.postMessage({ 
 					type: 'playVideo', 
-					videoId: this._currentVideoId,
-					isPaused: this._isPaused,
-					currentTime: this._currentTime
+					videoId: this._currentVideoId
 				});
 			}
 		});
@@ -99,8 +93,6 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 					if (videoId) {
 						if (this._view) {
 							this._currentVideoId = videoId;
-							this._isPaused = false;
-							this._currentTime = 0;
 							this._view.webview.postMessage({ type: 'playVideo', videoId });
 							// Save to history with temporary title
 							this._addToHistory(videoId, `Video ${videoId}`, url);
@@ -108,16 +100,6 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 					} else {
 						vscode.window.showErrorMessage('Invalid YouTube URL');
 					}
-				}
-			} else if (data.type === 'playerStateChanged') {
-				this._isPaused = data.isPaused;
-				this._currentTime = data.currentTime;
-			} else if (data.type === 'videoLoaded') {
-				// Update video title in history
-				const history = await this.getHistory();
-				const video = history.find(item => item.id === data.videoId);
-				if (video && video.title !== data.title) {
-					await this._addToHistory(data.videoId, data.title, video.url);
 				}
 			}
 		});
@@ -129,8 +111,8 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 			<html lang="en">
 			<head>
 				<meta charset="UTF-8">
+				<meta name="referrer" content="strict-origin-when-cross-origin">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<script src="https://www.youtube.com/iframe_api"></script>
 				<style>
 					body {
 						margin: 0;
@@ -147,20 +129,9 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 						position: absolute;
 						width: 100%;
 						height: 100%;
-						display: flex;
-						align-items: center;
-						justify-content: center;
+						display: none;
 					}
-					.video-container {
-						position: relative;
-						width: 100%;
-						height: 100%;
-						overflow: hidden;
-					}
-					.video-container iframe {
-						position: absolute;
-						top: 0;
-						left: 0;
+					#player iframe {
 						width: 100%;
 						height: 100%;
 						border: none;
@@ -202,10 +173,6 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 					(function() {
 						const vscode = acquireVsCodeApi();
 						let currentVideoId = null;
-						let player = null;
-						let pendingTime = 0;
-						let pendingPaused = false;
-						let isAPIReady = false;
 
 						// DOM 요소들을 캐시
 						const playerContainer = document.getElementById('player');
@@ -220,95 +187,28 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 						window.addEventListener('message', event => {
 							const message = event.data;
 							if (message.type === 'playVideo') {
-								playVideo(message.videoId, message.isPaused, message.currentTime);
+								playVideo(message.videoId);
 							}
 						});
 
-						// YouTube API Ready 핸들러
-						window.onYouTubeIframeAPIReady = function() {
-							isAPIReady = true;
-							if (currentVideoId) {
-								createPlayer(currentVideoId);
-							}
-						};
-
 						// 비디오 재생 함수
-						function playVideo(videoId, isPaused = false, currentTime = 0) {
-							if (currentVideoId === videoId && player) return;
+						function playVideo(videoId) {
+							if (currentVideoId === videoId) return;
 							
 							currentVideoId = videoId;
-							pendingTime = currentTime;
-							pendingPaused = isPaused;
 
-							if (player) {
-								player.destroy();
-								player = null;
-							}
-
-							// Hide the button
+							// Hide the button, show the player
 							addVideoButton.style.display = 'none';
+							playerContainer.style.display = 'block';
 
-							if (isAPIReady) {
-								createPlayer(videoId);
-							}
-						}
-
-						function createPlayer(videoId) {
-							player = new YT.Player('player', {
-								height: '100%',
-								width: '100%',
-								videoId: videoId,
-								playerVars: {
-									autoplay: 1,
-									enablejsapi: 1
-								},
-								events: {
-									'onReady': onPlayerReady,
-									'onStateChange': onPlayerStateChange
-								}
-							});
-						}
-
-						function onPlayerReady(event) {
-							if (player) {
-								player.seekTo(pendingTime);
-								if (pendingPaused) {
-									player.pauseVideo();
-								}
-								// Send video title to extension
-								const videoData = player.getVideoData();
-								if (videoData && videoData.title) {
-									vscode.postMessage({
-										type: 'videoLoaded',
-										videoId: currentVideoId,
-										title: videoData.title
-									});
-								}
-							}
-						}
-
-						function onPlayerStateChange(event) {
-							// YT.PlayerState.PAUSED = 2
-							const isPaused = event.data === 2;
-							const currentTime = player ? player.getCurrentTime() : 0;
-							
-							vscode.postMessage({ 
-								type: 'playerStateChanged', 
-								isPaused,
-								currentTime
-							});
-
-							// 상태가 변경될 때마다 제목 확인 및 업데이트
-							if (player) {
-								const videoData = player.getVideoData();
-								if (videoData && videoData.title) {
-									vscode.postMessage({
-										type: 'videoLoaded',
-										videoId: currentVideoId,
-										title: videoData.title
-									});
-								}
-							}
+							// Load via proxy page to avoid YouTube Error 153
+							// The proxy page on GitHub Pages provides a valid HTTPS origin for the Referer header
+							playerContainer.innerHTML = '<iframe ' +
+								'src="https://pearlismylove.github.io/vscode-ext-youtube-player/youtube.html?v=' + encodeURIComponent(videoId) + '&autoplay=1" ' +
+								'referrerpolicy="strict-origin-when-cross-origin" ' +
+								'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ' +
+								'allowfullscreen>' +
+								'</iframe>';
 						}
 					})();
 				</script>

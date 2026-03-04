@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:til.simonwillison.net)",
+      "Bash(npm run:*)"
+    ]
+  }
+}
