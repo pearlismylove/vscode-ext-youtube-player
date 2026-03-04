@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as path from 'path';
+import * as https from 'https';
 
 interface VideoHistory {
 	id: string;
@@ -25,9 +25,11 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 			this._currentVideoId = videoId;
 			this._view.webview.postMessage({ type: 'playVideo', videoId });
 
-			// Save to history if title and url are provided
 			if (url) {
-				this._addToHistory(videoId, title || `Video ${videoId}`, url);
+				// Fetch real title from YouTube oEmbed API, then save to history
+				fetchVideoTitle(videoId).then(fetchedTitle => {
+					this._addToHistory(videoId, fetchedTitle || title || `Video ${videoId}`, url);
+				});
 			}
 		}
 	}
@@ -94,8 +96,10 @@ class YouTubeViewProvider implements vscode.WebviewViewProvider {
 						if (this._view) {
 							this._currentVideoId = videoId;
 							this._view.webview.postMessage({ type: 'playVideo', videoId });
-							// Save to history with temporary title
-							this._addToHistory(videoId, `Video ${videoId}`, url);
+							// Fetch real title and save to history
+							fetchVideoTitle(videoId).then(fetchedTitle => {
+								this._addToHistory(videoId, fetchedTitle || `Video ${videoId}`, url);
+							});
 						}
 					} else {
 						vscode.window.showErrorMessage('Invalid YouTube URL');
@@ -238,7 +242,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (url) {
 			const videoId = extractVideoId(url);
 			if (videoId) {
-				provider.playVideo(videoId, `Video ${videoId}`, url);
+				provider.playVideo(videoId, undefined, url);
 			} else {
 				vscode.window.showErrorMessage('Invalid YouTube URL');
 			}
@@ -277,6 +281,23 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(addVideoCommand, showHistoryCommand);
+}
+
+function fetchVideoTitle(videoId: string): Promise<string | null> {
+	const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+	return new Promise(resolve => {
+		https.get(oembedUrl, res => {
+			let data = '';
+			res.on('data', chunk => data += chunk);
+			res.on('end', () => {
+				try {
+					resolve(JSON.parse(data).title || null);
+				} catch {
+					resolve(null);
+				}
+			});
+		}).on('error', () => resolve(null));
+	});
 }
 
 function extractVideoId(url: string): string | null {
